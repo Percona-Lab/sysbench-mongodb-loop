@@ -34,7 +34,6 @@ curl -Lo %{buildroot}/opt/%{name}/sysbench-mongodb/mongo-java-driver-%{java_driv
 /opt/%{name}/%{name}.sh
 /usr/lib/systemd/system/%{name}.service
 /opt/%{name}/sysbench-mongodb
-/opt/%{name}/sysbench-mongodb/mongo-java-driver-%{java_driver}.jar
 
 
 %post
