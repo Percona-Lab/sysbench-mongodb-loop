@@ -1,72 +1,73 @@
 #!/bin/bash
-#
-# 1. Make sure java, java devel and git packages are installed
-# 2. 'git clone https://github.com/tmcallaghan/sysbench-mongodb'
-# 3. Download mongodb java driver to root of sysbench-mongodb git checkout
-# 4. Edit config.bash for your situation
-# 5. Copy and run this script in root of sysbench-mongodb git checkout
 
 set -e
 
-basedir=$1
-lockfile=/tmp/sysbench-mongodb-loop.lock
-driver=$basedir/mongo-java-driver-2.13.0.jar
-config=$basedir/config.bash
-sysbench_mongodb_log=/var/log/sysbench-mongodb/sysbench-mongodb.log
-mongo_flags="--quiet"
-keep_output=0
-delete_database=1
-shard_database=1
-iter_sleep=60
-up_set=0
-
-# Load vars from sysbench-mongodbs config
-if [ ! -f "$config" ]; then
-  echo "Cannot load sysbench-mongodb config: $config!"
+# Load global vars from sysbench-mongodb-loop config
+if [ ! -f "$(dirname $0)/config.sh" ]; then
+  echo "Cannot load sysbench-mongodb-loop config: $(dirname $0)/config.sh!"
   exit 1
 fi
-source $config
+source $(dirname $0)/config.sh
+
+TMP_DIR=$BASE_DIR/tmp
+LOCK_FILE=$TMP_DIR/sysbench-mongodb-loop.lock
+INIT_JS=$TMP_DIR/init.js
+MONGO_FLAGS="--quiet"
+
+# Load vars from sysbench-mongodbs config
+if [ ! -f "$SYSBENCH_MONGODB_CONFIG" ]; then
+  echo "Cannot load sysbench-mongodb config: $SYSBENCH_MONGODB_CONFIG!"
+  exit 1
+fi
+source $SYSBENCH_MONGODB_CONFIG
+
+if [ "$ADMIN_USERNAME" != "none" ] && [ "$ADMIN_PASSWORD" != "none" ]; then
+  MONGO_FLAGS="$MONGO_FLAGS --username=$ADMIN_USERNAME --password=$ADMIN_PASSWORD --authenticationDatabase=admin"
+fi
+
+if [ -z "$BASE_DIR" ]; then
+  BASE_DIR=$(readlink -f $(dirname $0))
+fi
 
 # Loop sysbench-mongodb forever
 (
   flock -n 200
-  cd $basedir
+
+  cd $BASE_DIR
+
   while true; do
-    if [ $keep_output -lt 1 ]; then
-      rm -f mongoSysbenchExecute*.txt* *.log 2>/dev/null || true
-    fi
-  
-    if [ "$A_USERNAME" != "none" ] && [ "$A_PASSWORD" != "none" ]; then
-      if [ "$up_set" -eq 0 ]; then
-	 mongo_flags="$mongo_flags --username=$A_USERNAME --password=$A_PASSWORD --authenticationDatabase=admin"
-         up_set=1
-      fi
-    fi 
-    if [ $delete_database -gt 0 ]; then
-      mongo $mongo_flags --eval 'db.getSiblingDB("'$DB_NAME'").runCommand({dropDatabase:1})' >/dev/null
+    if [ $KEEP_OUTPUT = "false" ]; then
+      rm -f $BASE_DIR/mongoSysbenchExecute*.txt* *.log 2>/dev/null || true
     fi
 
-    if [ $shard_database -gt 0 ]; then
-      js=/tmp/sbtest.js
-      echo 'sh.stopBalancer()' >$js
+    if [ $DELETE_DATABASE = "true" ]; then
+      echo 'db.getSiblingDB("'$DB_NAME'").runCommand({dropDatabase:1})' >$INIT_JS
+    fi
+
+    if [ $SHARD_DATABASE = "true" ]; then
+      echo 'sh.stopBalancer()' >>$INIT_JS
       for num in $(seq 1 ${NUM_COLLECTIONS}); do
          coll="${DB_NAME}${num}"
-         echo 'db.getSiblingDB("'$DB_NAME'").'$coll'.drop()' >>$js
+         echo 'db.getSiblingDB("'$DB_NAME'").'$coll'.drop()' >>$INIT_JS
       done
-      echo 'db.getSiblingDB("'$DB_NAME'").dropDatabase()' >>$js
-      echo 'sh.enableSharding("'$DB_NAME'")' >>$js
+      echo 'db.getSiblingDB("'$DB_NAME'").dropDatabase()' >>$INIT_JS
+      echo 'sh.enableSharding("'$DB_NAME'")' >>$INIT_JS
       for num in $(seq 1 ${NUM_COLLECTIONS}); do
          coll="${DB_NAME}${num}"
-         echo 'sh.shardCollection("'$DB_NAME'.'$coll'", {_id:"hashed"})' >>$js
+         echo 'sh.shardCollection("'$DB_NAME'.'$coll'", {_id:"hashed"})' >>$INIT_JS
       done
-      echo 'sh.startBalancer()' >>$js
-      mongo $mongo_flags $js
-      rm -f $js
+      echo 'sh.startBalancer()' >>$INIT_JS
+    fi
+    
+    if [ -f $INIT_JS ]; then
+      mongo $MONGO_FLAGS $INIT_JS
+      rm -f $INIT_JS
     fi
   
-    export CLASSPATH=$driver:$CLASSPATH
-    ./run.simple.bash $config >$sysbench_mongodb_log 2>&1
+    cd $SYSBENCH_MONGODB_DIR
+    export CLASSPATH=$SYSBENCH_MONOGDB_JAVA_DRIVER:$CLASSPATH
+    ./run.simple.bash $SYSBENCH_MONGODB_CONFIG >>$SYSBENCH_MONGODB_LOG 2>&1
     
-    sleep $iter_sleep
+    sleep $ITER_SLEEP
   done
-) 200>$lockfile
+) 200>$LOCK_FILE
