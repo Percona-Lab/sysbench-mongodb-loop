@@ -1,0 +1,3 @@
+[submodule "sysbench-mongodb"]
+	path = sysbench-mongodb
+	url = https://github.com/tmcallaghan/sysbench-mongodb
