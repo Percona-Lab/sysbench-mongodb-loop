@@ -24,6 +24,14 @@ BuildRequires:	java-1.8.0-openjdk java-1.8.0-openjdk-devel
 A wrapper to run sysbench-mongodb forever
 
 
+%package devel
+Summary:	A wrapper to run sysbench-mongodb forever - Devel
+
+
+%description devel
+A wrapper to run sysbench-mongodb forever - Devel
+
+
 %build
 cp -dpR %{SOURCE2} sysbench-mongodb
 cd sysbench-mongodb
@@ -72,8 +80,8 @@ User=%{run_user}
 Group=%{run_group}
 PermissionsStartOnly=true
 EnvironmentFile=%{prefix}/%{name}/config.sh
-ExecStart=/usr/bin/env bash -c "%{prefix}/%{name}/sysbench-mongodb-loop.sh & echo \$! >%{prefix}/%{name}/tmp/sysbench-mongodb-loop.pid; disown \$!"
-PIDFile=%{prefix}/%{name}/tmp/sysbench-mongodb-loop.pid
+ExecStart=/usr/bin/env bash -c "%{prefix}/%{name}/%{name}.sh & echo \$! >%{prefix}/%{name}/tmp/%{name}.pid; disown \$!"
+PIDFile=%{prefix}/%{name}/tmp/%{name}.pid
 
 [Install]
 WantedBy=multi-user.target
@@ -87,9 +95,13 @@ EOF
 %config %{prefix}/%{name}/sysbench-mongodb/config.bash
 %{prefix}/%{name}/sysbench-mongodb/mongo-java-driver-%{java_driver}.jar
 %{prefix}/%{name}/sysbench-mongodb/run.simple.bash
-%{prefix}/%{name}/sysbench-mongodb/src/*
+%{prefix}/%{name}/sysbench-mongodb/src/*.class
 %{prefix}/%{name}/sysbench-mongodb/README.md
 %{prefix}/%{name}/sysbench-mongodb/TODO
+
+
+%files devel
+%{prefix}/%{name}/sysbench-mongodb/src/*.java
 
 
 %post
