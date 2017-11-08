@@ -1,6 +1,6 @@
 %define run_user	nobody
 %define run_group	nobody
-%define	java_driver	2.13.0
+%define	java_driver	2.14.3
 %define java_driver_url	https://repo1.maven.org/maven2/org/mongodb/mongo-java-driver/%{java_driver}/mongo-java-driver-%{java_driver}.jar
 
 Name:		sysbench-mongodb-loop
@@ -11,9 +11,9 @@ Summary:	A wrapper to run sysbench-mongodb forever
 Group:		Software/Databases
 License:	Apache License 2.0
 URL:		https://github.com/Percona-Lab/sysbench-mongodb-loop
-Source0:	sysbench-mongodb-loop.sh
-Source1:	sysbench-mongodb-loop.service
-Source2:        sysbench-mongodb
+Source0:        sysbench-mongodb
+Source1:	sysbench-mongodb-loop.sh
+Source2:        README.md
 Prefix:		/opt
 
 Requires:	java-1.8.0-openjdk
@@ -33,7 +33,7 @@ A wrapper to run sysbench-mongodb forever - Devel
 
 
 %build
-cp -dpR %{SOURCE2} sysbench-mongodb
+cp -dpR %{SOURCE0} sysbench-mongodb
 cd sysbench-mongodb
 rm -rf .git .gitignore
 
@@ -52,7 +52,8 @@ mkdir -p %{buildroot}/usr/lib/systemd/system %{buildroot}%{prefix}/%{name}/{logs
 
 mv -f sysbench-mongodb %{buildroot}%{prefix}/%{name}/sysbench-mongodb
 
-install %{SOURCE0} %{buildroot}%{prefix}/%{name}/%{name}.sh
+install %{SOURCE1} %{buildroot}%{prefix}/%{name}/%{name}.sh
+install %{SOURCE2} %{buildroot}%{prefix}/%{name}/README.md
 
 %{__cat} <<EOF >>%{buildroot}%{prefix}/%{name}/config.sh
 DELETE_DATABASE=true
@@ -89,6 +90,7 @@ EOF
 
 
 %files
+%doc %attr(0644, root, root) %{prefix}/%{name}/README.md
 %config %{prefix}/%{name}/config.sh
 %{prefix}/%{name}/%{name}.sh
 /usr/lib/systemd/system/%{name}.service
