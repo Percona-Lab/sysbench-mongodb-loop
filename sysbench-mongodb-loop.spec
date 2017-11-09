@@ -39,9 +39,8 @@ rm -rf .git .gitignore
 
 # Build the classes
 curl -Lo mongo-java-driver-%{java_driver}.jar %{java_driver_url}
-export CLASSPATH=mongo-java-driver-%{java_driver}.jar:$CLASSPATH
-javac -cp $CLASSPATH:$PWD/src src/jmongosysbenchload.java
-javac -cp $CLASSPATH:$PWD/src src/jmongosysbenchexecute.java
+javac -cp mongo-java-driver-%{java_driver}.jar:$PWD/src src/jmongosysbenchload.java
+javac -cp mongo-java-driver-%{java_driver}.jar:$PWD/src src/jmongosysbenchexecute.java
 
 # Stop run.simple.bash from compiling the tool with javac
 sed -i -e /^javac/d run.simple.bash
@@ -56,7 +55,6 @@ install %{SOURCE1} %{buildroot}%{prefix}/%{name}/%{name}.sh
 install %{SOURCE2} %{buildroot}%{prefix}/%{name}/README.md
 
 %{__cat} <<EOF >>%{buildroot}%{prefix}/%{name}/config.sh
-DELETE_DATABASE=true
 KEEP_OUTPUT=false
 SHARD_DATABASE=false
 ADMIN_USERNAME=none

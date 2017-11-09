@@ -40,9 +40,7 @@ fi
       rm -f $BASE_DIR/mongoSysbenchExecute*.txt* *.log 2>/dev/null || true
     fi
 
-    if [ $DELETE_DATABASE = "true" ]; then
-      echo 'db.getSiblingDB("'$DB_NAME'").runCommand({dropDatabase:1})' >$INIT_JS
-    fi
+    echo 'db.getSiblingDB("'$DB_NAME'").runCommand({dropDatabase:1})' >$INIT_JS
 
     if [ $SHARD_DATABASE = "true" ]; then
       echo 'sh.stopBalancer()' >>$INIT_JS
@@ -59,10 +57,8 @@ fi
       echo 'sh.startBalancer()' >>$INIT_JS
     fi
     
-    if [ -f $INIT_JS ]; then
-      mongo $MONGO_FLAGS $INIT_JS
-      rm -f $INIT_JS
-    fi
+    mongo $MONGO_FLAGS $INIT_JS
+    rm -f $INIT_JS
   
     cd $SYSBENCH_MONGODB_DIR
     export CLASSPATH=$SYSBENCH_MONOGDB_JAVA_DRIVER:$CLASSPATH
