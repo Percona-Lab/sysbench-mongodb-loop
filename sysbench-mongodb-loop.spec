@@ -70,7 +70,7 @@ EOF
 
 %{__cat} <<EOF >>%{buildroot}/usr/lib/systemd/system/%{name}.service
 [Unit]
-Description=sysbench-mongodb
+Description=%{name}
 After=time-sync.target network.target
 
 [Service]
