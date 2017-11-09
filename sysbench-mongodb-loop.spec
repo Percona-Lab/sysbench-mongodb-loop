@@ -34,13 +34,15 @@ A wrapper to run sysbench-mongodb forever - Devel
 
 %build
 cp -dpR %{SOURCE0} sysbench-mongodb
+
+curl -Lo mongo-java-driver-%{java_driver}.jar %{java_driver_url}
+
 cd sysbench-mongodb
 rm -rf .git .gitignore
 
 # Build the classes
-curl -Lo mongo-java-driver-%{java_driver}.jar %{java_driver_url}
-javac -cp mongo-java-driver-%{java_driver}.jar:$PWD/src src/jmongosysbenchload.java
-javac -cp mongo-java-driver-%{java_driver}.jar:$PWD/src src/jmongosysbenchexecute.java
+javac -cp ../mongo-java-driver-%{java_driver}.jar:$PWD/src src/jmongosysbenchload.java
+javac -cp ../mongo-java-driver-%{java_driver}.jar:$PWD/src src/jmongosysbenchexecute.java
 
 # Stop run.simple.bash from compiling the tool with javac
 sed -i -e /^javac/d run.simple.bash
@@ -49,6 +51,7 @@ sed -i -e /^javac/d run.simple.bash
 %install
 mkdir -p %{buildroot}/usr/lib/systemd/system %{buildroot}%{prefix}/%{name}/{logs,tmp}
 
+mv -f mongo-java-driver-%{java_driver}.jar %{buildroot}%{prefix}/%{name}/mongo-java-driver-%{java_driver}.jar
 mv -f sysbench-mongodb %{buildroot}%{prefix}/%{name}/sysbench-mongodb
 
 install %{SOURCE1} %{buildroot}%{prefix}/%{name}/%{name}.sh
@@ -62,10 +65,10 @@ ADMIN_PASSWORD=none
 ITER_SLEEP=60
 
 BASE_DIR=%{prefix}/%{name}
-SYSBENCH_MONGODB_DIR=\$BASE_DIR/sysbench-mongodb
 SYSBENCH_MONGODB_LOG=\$BASE_DIR/logs/sysbench-mongodb.log
+SYSBENCH_MONGODB_DIR=\$BASE_DIR/sysbench-mongodb
 SYSBENCH_MONGODB_CONFIG=\$SYSBENCH_MONGODB_DIR/config.bash
-SYSBENCH_MONOGDB_JAVA_DRIVER=\$SYSBENCH_MONGODB_DIR/mongo-java-driver-%{java_driver}.jar
+SYSBENCH_MONOGDB_JAVA_DRIVER=\$BASE_DIR/mongo-java-driver-%{java_driver}.jar
 EOF
 
 %{__cat} <<EOF >>%{buildroot}/usr/lib/systemd/system/%{name}.service
@@ -93,7 +96,7 @@ EOF
 %{prefix}/%{name}/%{name}.sh
 /usr/lib/systemd/system/%{name}.service
 %config %{prefix}/%{name}/sysbench-mongodb/config.bash
-%{prefix}/%{name}/sysbench-mongodb/mongo-java-driver-%{java_driver}.jar
+%{prefix}/%{name}/mongo-java-driver-%{java_driver}.jar
 %{prefix}/%{name}/sysbench-mongodb/run.simple.bash
 %{prefix}/%{name}/sysbench-mongodb/src/*.class
 %{prefix}/%{name}/sysbench-mongodb/README.md
